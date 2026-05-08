@@ -1,17 +1,18 @@
 """
 ╔══════════════════════════════════════════════════════════════╗
-║          VINTED ARBITRAGE BOT — par ton assistant IA         ║
+║        LEBONCOIN ARBITRAGE BOT — par ton assistant IA        ║
 ║  Détecte les bonnes affaires et alerte via Telegram          ║
 ╚══════════════════════════════════════════════════════════════╝
 
 INSTALLATION :
-  pip install requests python-telegram-bot schedule colorama
+  (déjà fait si tu as installé le bot Vinted)
+  python -m pip install -r requirements.txt
 
 CONFIGURATION :
-  1. Crée un bot Telegram via @BotFather → copie le TOKEN
+  1. Crée un DEUXIÈME bot Telegram via @BotFather → copie le TOKEN
   2. Trouve ton CHAT_ID via @userinfobot
   3. Remplis la section CONFIG ci-dessous
-  4. Lance : python vinted_bot.py
+  4. Lance : python leboncoin_bot.py
 """
 
 import requests
@@ -30,213 +31,322 @@ init(autoreset=True)
 #  ⚙️  CONFIG — REMPLIS CES VALEURS
 # ═══════════════════════════════════════════════════════════════
 
-TELEGRAM_TOKEN = "8237320867:AAEdwPBUbTOUDnaUvyIL-rxbkKantEPs1Q4"       # Ex: 7812345678:AAF...
-TELEGRAM_CHAT_ID = "7078032725"  # Ex: 123456789
+TELEGRAM_TOKEN  = "TON_TOKEN_ICI"      # Token du 2ème bot Telegram
+TELEGRAM_CHAT_ID = "TON_CHAT_ID_ICI"   # Ton Chat ID
 
-# Intervalle de vérification (en secondes)
-CHECK_INTERVAL = 60  # Vérifie toutes les 60 secondes
-
-# Plus-value minimale pour alerter (en %)
-MIN_MARGE = 60
+CHECK_INTERVAL = 90   # secondes entre chaque vérification
+MIN_MARGE      = 60   # % de plus-value minimum pour alerter
 
 # ═══════════════════════════════════════════════════════════════
-#  💎  BASE DE MARQUES — Prix marché de revente estimé (€)
-#  (Prix moyen de revente sur Vinted/Vestiaire en bon état)
+#  💎  BASE DE MARQUES & PRODUITS
 # ═══════════════════════════════════════════════════════════════
 
 MARQUES = {
-    # ── STREETWEAR / HYPE ──
+
+    # ── MODE / STREETWEAR ──
     "stone island": {
         "prix_marche": 180, "categorie": "streetwear",
-        "mots_cles": ["stone island", "stone_island"],
-        "emoji": "🪨"
-    },
-    "palace": {
-        "prix_marche": 120, "categorie": "streetwear",
-        "mots_cles": ["palace"],
-        "emoji": "🛹"
+        "mots_cles": ["stone island", "stone_island"], "emoji": "🪨"
     },
     "supreme": {
         "prix_marche": 150, "categorie": "streetwear",
-        "mots_cles": ["supreme"],
-        "emoji": "🔴"
+        "mots_cles": ["supreme"], "emoji": "🔴"
+    },
+    "palace": {
+        "prix_marche": 120, "categorie": "streetwear",
+        "mots_cles": ["palace"], "emoji": "🛹"
     },
     "off-white": {
         "prix_marche": 250, "categorie": "streetwear",
-        "mots_cles": ["off white", "off-white", "offwhite", "virgil"],
-        "emoji": "⬜"
+        "mots_cles": ["off white", "off-white", "offwhite"], "emoji": "⬜"
     },
-    "kith": {
-        "prix_marche": 130, "categorie": "streetwear",
-        "mots_cles": ["kith"],
-        "emoji": "🏙️"
+    "cp company": {
+        "prix_marche": 200, "categorie": "streetwear",
+        "mots_cles": ["cp company", "c.p. company"], "emoji": "🔭"
     },
-    "apc": {
-        "prix_marche": 100, "categorie": "streetwear",
-        "mots_cles": ["a.p.c", "apc"],
-        "emoji": "🇫🇷"
+    "carhartt": {
+        "prix_marche": 70, "categorie": "workwear",
+        "mots_cles": ["carhartt"], "emoji": "🟧"
+    },
+    "ralph lauren": {
+        "prix_marche": 100, "categorie": "premium",
+        "mots_cles": ["ralph lauren", "polo ralph"], "emoji": "🏇"
+    },
+    "lacoste": {
+        "prix_marche": 60, "categorie": "premium",
+        "mots_cles": ["lacoste"], "emoji": "🐊"
     },
     "ami paris": {
-        "prix_marche": 130, "categorie": "streetwear",
-        "mots_cles": ["ami paris", "ami alexandre mattiussi"],
-        "emoji": "❤️"
-    },
-
-    # ── SNEAKERS / CHAUSSURES ──
-    "nike": {
-        "prix_marche": 80, "categorie": "sneakers",
-        "mots_cles": ["nike", "air max", "air force", "dunk", "jordan"],
-        "emoji": "✔️"
-    },
-    "jordan": {
-        "prix_marche": 130, "categorie": "sneakers",
-        "mots_cles": ["jordan", "air jordan", "aj1", "aj4"],
-        "emoji": "🏀"
-    },
-    "new balance": {
-        "prix_marche": 90, "categorie": "sneakers",
-        "mots_cles": ["new balance", "newbalance", "nb 550", "nb 574", "990"],
-        "emoji": "🔵"
-    },
-    "adidas": {
-        "prix_marche": 75, "categorie": "sneakers",
-        "mots_cles": ["adidas", "yeezy", "gazelle", "samba", "campus"],
-        "emoji": "⚫"
-    },
-    "yeezy": {
-        "prix_marche": 200, "categorie": "sneakers",
-        "mots_cles": ["yeezy", "yeezys"],
-        "emoji": "🟤"
-    },
-    "salomon": {
-        "prix_marche": 110, "categorie": "sneakers",
-        "mots_cles": ["salomon", "xt-6", "xt6", "speedcross"],
-        "emoji": "🏔️"
-    },
-
-    # ── VESTES / MANTEAUX ──
-    "moncler": {
-        "prix_marche": 500, "categorie": "luxe",
-        "mots_cles": ["moncler"],
-        "emoji": "🏔️"
-    },
-    "canada goose": {
-        "prix_marche": 400, "categorie": "luxe",
-        "mots_cles": ["canada goose", "canada_goose"],
-        "emoji": "🦢"
-    },
-    "the north face": {
-        "prix_marche": 150, "categorie": "outdoor",
-        "mots_cles": ["north face", "northface", "tnf", "nuptse"],
-        "emoji": "⛺"
-    },
-    "arc'teryx": {
-        "prix_marche": 300, "categorie": "outdoor",
-        "mots_cles": ["arcteryx", "arc'teryx", "arc teryx"],
-        "emoji": "🦅"
+        "prix_marche": 130, "categorie": "premium",
+        "mots_cles": ["ami paris"], "emoji": "❤️"
     },
 
     # ── LUXE ──
     "gucci": {
         "prix_marche": 400, "categorie": "luxe",
-        "mots_cles": ["gucci"],
-        "emoji": "💚"
+        "mots_cles": ["gucci"], "emoji": "💚"
     },
     "louis vuitton": {
         "prix_marche": 600, "categorie": "luxe",
-        "mots_cles": ["louis vuitton", "lv", "l.v", "vuitton"],
-        "emoji": "🟤"
+        "mots_cles": ["louis vuitton", "lv", "vuitton"], "emoji": "🟤"
     },
     "balenciaga": {
         "prix_marche": 350, "categorie": "luxe",
-        "mots_cles": ["balenciaga", "balencia"],
-        "emoji": "⬛"
+        "mots_cles": ["balenciaga"], "emoji": "⬛"
+    },
+    "moncler": {
+        "prix_marche": 500, "categorie": "luxe",
+        "mots_cles": ["moncler"], "emoji": "🏔️"
+    },
+    "canada goose": {
+        "prix_marche": 400, "categorie": "luxe",
+        "mots_cles": ["canada goose"], "emoji": "🦢"
     },
     "burberry": {
         "prix_marche": 280, "categorie": "luxe",
-        "mots_cles": ["burberry"],
-        "emoji": "🟨"
+        "mots_cles": ["burberry"], "emoji": "🟨"
     },
-    "ralph lauren": {
-        "prix_marche": 100, "categorie": "premium",
-        "mots_cles": ["ralph lauren", "polo ralph", "polo rl"],
-        "emoji": "🏇"
+
+    # ── SNEAKERS ──
+    "jordan": {
+        "prix_marche": 130, "categorie": "sneakers",
+        "mots_cles": ["jordan", "air jordan", "aj1", "aj4"], "emoji": "🏀"
     },
-    "lacoste": {
-        "prix_marche": 60, "categorie": "premium",
-        "mots_cles": ["lacoste"],
-        "emoji": "🐊"
+    "yeezy": {
+        "prix_marche": 200, "categorie": "sneakers",
+        "mots_cles": ["yeezy"], "emoji": "🟤"
     },
-    "cp company": {
-        "prix_marche": 200, "categorie": "streetwear",
-        "mots_cles": ["cp company", "c.p. company", "cpcompany"],
-        "emoji": "🔭"
+    "new balance": {
+        "prix_marche": 90, "categorie": "sneakers",
+        "mots_cles": ["new balance", "nb 550", "nb 574", "990"], "emoji": "🔵"
     },
-    "carhartt": {
-        "prix_marche": 70, "categorie": "workwear",
-        "mots_cles": ["carhartt", "carhart"],
-        "emoji": "🟧"
+    "nike": {
+        "prix_marche": 80, "categorie": "sneakers",
+        "mots_cles": ["nike dunk", "air max", "air force 1"], "emoji": "✔️"
     },
-    "levi's": {
-        "prix_marche": 50, "categorie": "denim",
-        "mots_cles": ["levis", "levi's", "levi strauss"],
-        "emoji": "👖"
+    "adidas": {
+        "prix_marche": 75, "categorie": "sneakers",
+        "mots_cles": ["adidas samba", "adidas gazelle", "adidas campus"], "emoji": "⚫"
+    },
+    "salomon": {
+        "prix_marche": 110, "categorie": "sneakers",
+        "mots_cles": ["salomon xt", "salomon speedcross"], "emoji": "🏔️"
+    },
+
+    # ── VÉLOS ──
+    "triban": {
+        "prix_marche": 400, "categorie": "velo",
+        "mots_cles": ["triban", "triban rc"], "emoji": "🚴"
+    },
+    "canyon": {
+        "prix_marche": 800, "categorie": "velo",
+        "mots_cles": ["canyon"], "emoji": "🏔️"
+    },
+    "trek": {
+        "prix_marche": 700, "categorie": "velo",
+        "mots_cles": ["trek"], "emoji": "🚵"
+    },
+    "specialized": {
+        "prix_marche": 900, "categorie": "velo",
+        "mots_cles": ["specialized"], "emoji": "⚡"
+    },
+    "btwin": {
+        "prix_marche": 250, "categorie": "velo",
+        "mots_cles": ["btwin", "b'twin"], "emoji": "🚲"
+    },
+    "giant": {
+        "prix_marche": 600, "categorie": "velo",
+        "mots_cles": ["giant"], "emoji": "🚴"
+    },
+    "scott": {
+        "prix_marche": 700, "categorie": "velo",
+        "mots_cles": ["scott velo", "scott bike"], "emoji": "🏁"
+    },
+
+    # ── ÉLECTRONIQUE ──
+    "iphone": {
+        "prix_marche": 600, "categorie": "electronique",
+        "mots_cles": ["iphone 13", "iphone 14", "iphone 15", "iphone 16"], "emoji": "📱"
+    },
+    "macbook": {
+        "prix_marche": 900, "categorie": "electronique",
+        "mots_cles": ["macbook pro", "macbook air", "macbook m1", "macbook m2", "macbook m3"], "emoji": "💻"
+    },
+    "ipad": {
+        "prix_marche": 400, "categorie": "electronique",
+        "mots_cles": ["ipad pro", "ipad air", "ipad mini"], "emoji": "📟"
+    },
+    "airpods": {
+        "prix_marche": 150, "categorie": "electronique",
+        "mots_cles": ["airpods pro", "airpods max"], "emoji": "🎧"
+    },
+    "apple watch": {
+        "prix_marche": 250, "categorie": "electronique",
+        "mots_cles": ["apple watch", "apple watch ultra", "apple watch series"], "emoji": "⌚"
+    },
+    "sony playstation": {
+        "prix_marche": 400, "categorie": "electronique",
+        "mots_cles": ["ps5", "playstation 5"], "emoji": "🎮"
+    },
+    "sony ps4": {
+        "prix_marche": 180, "categorie": "electronique",
+        "mots_cles": ["ps4", "playstation 4"], "emoji": "🎮"
+    },
+    "sony camera": {
+        "prix_marche": 700, "categorie": "electronique",
+        "mots_cles": ["sony a7", "sony zv", "sony alpha"], "emoji": "📷"
+    },
+    "sony headphones": {
+        "prix_marche": 200, "categorie": "electronique",
+        "mots_cles": ["sony wh-1000", "sony wf-1000"], "emoji": "🎧"
+    },
+    "samsung galaxy": {
+        "prix_marche": 500, "categorie": "electronique",
+        "mots_cles": ["samsung s23", "samsung s24", "samsung s25", "galaxy s"], "emoji": "📱"
+    },
+    "nintendo switch": {
+        "prix_marche": 220, "categorie": "electronique",
+        "mots_cles": ["nintendo switch", "switch oled"], "emoji": "🎮"
+    },
+    "xbox": {
+        "prix_marche": 350, "categorie": "electronique",
+        "mots_cles": ["xbox series x", "xbox series s"], "emoji": "🎮"
+    },
+    "gopro": {
+        "prix_marche": 250, "categorie": "electronique",
+        "mots_cles": ["gopro hero", "gopro 10", "gopro 11", "gopro 12"], "emoji": "📹"
+    },
+    "dyson": {
+        "prix_marche": 300, "categorie": "electronique",
+        "mots_cles": ["dyson airwrap", "dyson v11", "dyson v12", "dyson v15"], "emoji": "🌀"
+    },
+
+    # ── MONTRES & BIJOUX ──
+    "rolex": {
+        "prix_marche": 8000, "categorie": "montre",
+        "mots_cles": ["rolex"], "emoji": "⌚"
+    },
+    "omega": {
+        "prix_marche": 3000, "categorie": "montre",
+        "mots_cles": ["omega seamaster", "omega speedmaster"], "emoji": "⌚"
+    },
+    "tag heuer": {
+        "prix_marche": 1500, "categorie": "montre",
+        "mots_cles": ["tag heuer", "tagheuer"], "emoji": "⌚"
+    },
+    "casio g-shock": {
+        "prix_marche": 150, "categorie": "montre",
+        "mots_cles": ["g-shock", "gshock", "casio gw"], "emoji": "⌚"
+    },
+    "bracelet gold": {
+        "prix_marche": 200, "categorie": "bijou",
+        "mots_cles": ["bracelet or 18k", "bracelet or 14k", "bracelet plaqué or"], "emoji": "📿"
+    },
+    "collier or": {
+        "prix_marche": 300, "categorie": "bijou",
+        "mots_cles": ["collier or", "chaine or 18k"], "emoji": "📿"
     },
 }
 
 # ═══════════════════════════════════════════════════════════════
-#  🔍  RECHERCHES VINTED — Personnalise tes recherches
+#  🔍  RECHERCHES LEBONCOIN
 # ═══════════════════════════════════════════════════════════════
 
 RECHERCHES = [
     {
         "nom": "Vestes & Manteaux premium",
         "params": {
-            "search_text": "",
-            "catalog_ids": "1",        # 1 = Hommes
-            "category_ids": "1037",    # Vestes & Manteaux
-            "price_to": "150",         # Max 150€
-            "order": "newest_first",
-            "per_page": "96",
-        }
+            "category": "11",        # Mode homme
+            "locations": "",
+            "price_min": "1",
+            "price_max": "200",
+            "sort": "time",
+            "order": "desc",
+        },
+        "keywords": "veste manteau stone island supreme palace moncler canada goose"
     },
     {
         "nom": "Streetwear marques",
         "params": {
-            "search_text": "stone island palace supreme kith",
-            "catalog_ids": "1",
-            "price_to": "200",
-            "order": "newest_first",
-            "per_page": "96",
-        }
+            "category": "11",
+            "price_max": "300",
+            "sort": "time",
+            "order": "desc",
+        },
+        "keywords": "stone island supreme palace off white balenciaga gucci"
     },
     {
         "nom": "Sneakers hype",
         "params": {
-            "search_text": "jordan yeezy dunk",
-            "catalog_ids": "1",
-            "category_ids": "305",     # Chaussures
-            "price_to": "150",
-            "order": "newest_first",
-            "per_page": "96",
-        }
+            "category": "11",
+            "price_max": "200",
+            "sort": "time",
+            "order": "desc",
+        },
+        "keywords": "jordan yeezy dunk new balance salomon"
     },
     {
-        "nom": "Luxe pas cher",
+        "nom": "Vélos Triban & marques",
         "params": {
-            "search_text": "gucci balenciaga burberry moncler",
-            "price_to": "300",
-            "order": "newest_first",
-            "per_page": "96",
-        }
+            "category": "36",        # Vélos
+            "price_min": "50",
+            "price_max": "1500",
+            "sort": "time",
+            "order": "desc",
+        },
+        "keywords": "triban canyon trek specialized giant scott"
+    },
+    {
+        "nom": "iPhone & Apple",
+        "params": {
+            "category": "15",        # Téléphones
+            "price_min": "50",
+            "price_max": "800",
+            "sort": "time",
+            "order": "desc",
+        },
+        "keywords": "iphone 13 14 15 16 macbook airpods apple watch"
+    },
+    {
+        "nom": "PlayStation & Gaming",
+        "params": {
+            "category": "142",       # Consoles & jeux
+            "price_min": "50",
+            "price_max": "500",
+            "sort": "time",
+            "order": "desc",
+        },
+        "keywords": "ps5 playstation 5 xbox series nintendo switch"
+    },
+    {
+        "nom": "Sony & Électronique",
+        "params": {
+            "category": "15",
+            "price_min": "30",
+            "price_max": "1000",
+            "sort": "time",
+            "order": "desc",
+        },
+        "keywords": "sony samsung dyson gopro"
+    },
+    {
+        "nom": "Montres & Bijoux",
+        "params": {
+            "category": "245",       # Montres & bijoux
+            "price_min": "30",
+            "price_max": "5000",
+            "sort": "time",
+            "order": "desc",
+        },
+        "keywords": "rolex omega tag heuer g-shock bracelet collier or"
     },
 ]
 
 # ═══════════════════════════════════════════════════════════════
-#  💾  STOCKAGE des annonces déjà vues
+#  💾  STOCKAGE
 # ═══════════════════════════════════════════════════════════════
 
-SEEN_FILE = "vinted_seen.json"
+SEEN_FILE = "leboncoin_seen.json"
 
 def load_seen():
     if os.path.exists(SEEN_FILE):
@@ -251,46 +361,61 @@ def save_seen(seen):
 seen_ids = load_seen()
 
 # ═══════════════════════════════════════════════════════════════
-#  🌐  SCRAPER VINTED
+#  🌐  SCRAPER LEBONCOIN
 # ═══════════════════════════════════════════════════════════════
 
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
     "Accept": "application/json, text/plain, */*",
     "Accept-Language": "fr-FR,fr;q=0.9",
-    "Referer": "https://www.vinted.fr/",
-    "Origin": "https://www.vinted.fr",
+    "Referer": "https://www.leboncoin.fr/",
+    "api_key": "ba0c2dad52b3565c9a1b4d0e9af05d65",  # Clé publique Leboncoin
 }
 
 SESSION = requests.Session()
 SESSION.headers.update(HEADERS)
 
-def get_vinted_token():
-    """Récupère le cookie CSRF de Vinted"""
+def search_leboncoin(recherche):
+    """Appelle l'API Leboncoin"""
     try:
-        r = SESSION.get("https://www.vinted.fr", timeout=10)
-        return True
-    except Exception as e:
-        print(f"{Fore.RED}❌ Erreur connexion Vinted: {e}")
-        return False
+        # Construction du body de recherche
+        body = {
+            "filters": {
+                "category": {"id": recherche["params"].get("category", "")},
+                "keywords": {"text": recherche["keywords"]},
+                "ranges": {}
+            },
+            "sort_by": "time",
+            "sort_order": "desc",
+            "limit": 100,
+            "offset": 0,
+        }
 
-def search_vinted(params):
-    """Appelle l'API Vinted"""
-    try:
-        url = "https://www.vinted.fr/api/v2/catalog/items"
-        r = SESSION.get(url, params=params, timeout=15)
-        
-        if r.status_code == 401:
-            get_vinted_token()
-            r = SESSION.get(url, params=params, timeout=15)
-        
+        # Ajouter les filtres de prix
+        if recherche["params"].get("price_max"):
+            body["filters"]["ranges"]["price"] = {
+                "max": int(recherche["params"]["price_max"])
+            }
+        if recherche["params"].get("price_min"):
+            if "price" not in body["filters"]["ranges"]:
+                body["filters"]["ranges"]["price"] = {}
+            body["filters"]["ranges"]["price"]["min"] = int(recherche["params"]["price_min"])
+
+        r = SESSION.post(
+            "https://api.leboncoin.fr/api/adfinder/v1/search",
+            json=body,
+            timeout=15
+        )
+
         if r.status_code == 200:
-            return r.json().get("items", [])
+            data = r.json()
+            return data.get("ads", [])
         else:
-            print(f"{Fore.YELLOW}⚠️ Status {r.status_code}")
+            print(f"{Fore.YELLOW}⚠️ Status {r.status_code} pour {recherche['nom']}")
             return []
+
     except Exception as e:
-        print(f"{Fore.RED}❌ Erreur API: {e}")
+        print(f"{Fore.RED}❌ Erreur API Leboncoin: {e}")
         return []
 
 # ═══════════════════════════════════════════════════════════════
@@ -298,65 +423,50 @@ def search_vinted(params):
 # ═══════════════════════════════════════════════════════════════
 
 def detecter_marque(titre, description=""):
-    """Détecte la marque dans le titre/description"""
     texte = (titre + " " + description).lower()
-    
     meilleure_marque = None
     meilleur_score = 0
-    
+
     for nom_marque, info in MARQUES.items():
         for mot_cle in info["mots_cles"]:
             if mot_cle in texte:
-                # Score basé sur la longueur du mot-clé (plus précis = mieux)
                 score = len(mot_cle)
                 if score > meilleur_score:
                     meilleur_score = score
                     meilleure_marque = (nom_marque, info)
-    
+
     return meilleure_marque
 
-def calculer_marge(prix_vinted, prix_marche):
-    """
-    Calcule la plus-value potentielle
-    Si prix_vinted = 50€ et prix_marche = 150€
-    → tu peux revendre à 150€ → plus-value de 200%
-    → ou revendre à 120€ → plus-value de 140%
-    """
-    if prix_vinted <= 0:
+def calculer_marge(prix, prix_marche):
+    if prix <= 0:
         return 0
-    marge = ((prix_marche - prix_vinted) / prix_vinted) * 100
-    return round(marge, 1)
+    return round(((prix_marche - prix) / prix) * 100, 1)
 
-def analyser_article(item):
-    """Analyse un article et retourne les infos si bonne affaire"""
+def analyser_article(ad):
     try:
-        item_id = str(item.get("id", ""))
-        titre = item.get("title", "")
-        prix = float(item.get("price", {}).get("amount", 0) if isinstance(item.get("price"), dict) else item.get("price", 0))
-        url = f"https://www.vinted.fr/items/{item_id}"
-        
+        ad_id   = str(ad.get("list_id", ""))
+        titre   = ad.get("subject", "")
+        prix    = float(ad.get("price", [0])[0] if isinstance(ad.get("price"), list) else ad.get("price", 0))
+        url     = ad.get("url", f"https://www.leboncoin.fr/annonces/{ad_id}")
+        desc    = ad.get("body", "")
+        ville   = ad.get("location", {}).get("city", "?")
+
         # Photo
-        photos = item.get("photos", [])
-        photo_url = photos[0].get("full_size_url", "") if photos else ""
-        
-        # Taille & état
-        taille = item.get("size_title", "?")
-        etat = item.get("status", "")
-        
-        # Détecter la marque
-        brand = item.get("brand_title", "") or ""
-        resultat = detecter_marque(titre + " " + brand)
-        
+        images  = ad.get("images", {})
+        photos  = images.get("urls_large", images.get("urls", []))
+        photo   = photos[0] if photos else ""
+
+        resultat = detecter_marque(titre, desc)
         if not resultat:
             return None
-        
+
         nom_marque, info_marque = resultat
         prix_marche = info_marque["prix_marche"]
         marge = calculer_marge(prix, prix_marche)
-        
+
         if marge >= MIN_MARGE:
             return {
-                "id": item_id,
+                "id": ad_id,
                 "titre": titre,
                 "prix": prix,
                 "marque": nom_marque,
@@ -364,11 +474,9 @@ def analyser_article(item):
                 "categorie": info_marque["categorie"],
                 "prix_marche": prix_marche,
                 "marge": marge,
-                "taille": taille,
-                "etat": etat,
+                "ville": ville,
                 "url": url,
-                "photo": photo_url,
-                "vendeur": item.get("user", {}).get("login", "?"),
+                "photo": photo,
             }
     except Exception as e:
         pass
@@ -379,11 +487,9 @@ def analyser_article(item):
 # ═══════════════════════════════════════════════════════════════
 
 async def send_telegram_alert(affaire):
-    """Envoie une alerte Telegram avec photo"""
     try:
         bot = telegram.Bot(token=TELEGRAM_TOKEN)
-        
-        # Niveau d'alerte
+
         if affaire["marge"] >= 200:
             niveau = "🚨 DEAL EXCEPTIONNEL"
             urgence = "⚡⚡⚡"
@@ -393,29 +499,27 @@ async def send_telegram_alert(affaire):
         else:
             niveau = "✅ BONNE AFFAIRE"
             urgence = "⚡"
-        
-        # Prix de revente conseillé
-        prix_revente_conseille = round(affaire["prix_marche"] * 0.75)
-        profit_estime = prix_revente_conseille - affaire["prix"] - (affaire["prix"] * 0.05)  # -5% frais Vinted
-        
+
+        prix_revente = round(affaire["prix_marche"] * 0.75)
+        profit = round(prix_revente - affaire["prix"])
+
         msg = f"""
 {urgence} *{niveau}* {urgence}
+🏷️ *LEBONCOIN*
 
 {affaire["emoji_marque"]} *{affaire["marque"].upper()}*
 📦 {affaire["titre"]}
 
-💰 *Prix Vinted :* {affaire["prix"]}€
+💰 *Prix annonce :* {affaire["prix"]}€
 🏷️ *Prix marché :* ~{affaire["prix_marche"]}€
-📈 *Plus-value potentielle :* +{affaire["marge"]}%
-💵 *Revendre à ~{prix_revente_conseille}€ → profit ~{profit_estime:.0f}€*
+📈 *Plus-value :* +{affaire["marge"]}%
+💵 *Revendre ~{prix_revente}€ → profit ~{profit}€*
 
-📏 Taille : {affaire["taille"]}
-🏪 Vendeur : {affaire["vendeur"]}
+📍 Ville : {affaire["ville"]}
 🗂️ Catégorie : {affaire["categorie"]}
 
 🔗 [VOIR L'ANNONCE]({affaire["url"]})
 """
-        
         if affaire["photo"]:
             await bot.send_photo(
                 chat_id=TELEGRAM_CHAT_ID,
@@ -427,10 +531,8 @@ async def send_telegram_alert(affaire):
             await bot.send_message(
                 chat_id=TELEGRAM_CHAT_ID,
                 text=msg,
-                parse_mode="Markdown",
-                disable_web_page_preview=False
+                parse_mode="Markdown"
             )
-        
         return True
     except Exception as e:
         print(f"{Fore.RED}❌ Erreur Telegram: {e}")
@@ -440,17 +542,16 @@ def send_alert(affaire):
     asyncio.run(send_telegram_alert(affaire))
 
 async def send_startup_message():
-    """Message de démarrage"""
     try:
         bot = telegram.Bot(token=TELEGRAM_TOKEN)
         await bot.send_message(
             chat_id=TELEGRAM_CHAT_ID,
-            text=f"🤖 *Vinted Arbitrage Bot démarré !*\n\n"
-                 f"🔍 Je surveille {len(RECHERCHES)} recherches\n"
-                 f"💎 {len(MARQUES)} marques en base\n"
+            text=f"🤖 *Leboncoin Arbitrage Bot démarré !*\n\n"
+                 f"🔍 {len(RECHERCHES)} recherches actives\n"
+                 f"💎 {len(MARQUES)} marques/produits surveillés\n"
                  f"📊 Alerte si plus-value ≥ {MIN_MARGE}%\n"
                  f"⏱️ Vérification toutes les {CHECK_INTERVAL}s\n\n"
-                 f"_Je t'envoie un message dès que je trouve une bonne affaire !_",
+                 f"_Catégories : Mode, Vélos, Électronique, Montres & Bijoux_",
             parse_mode="Markdown"
         )
     except Exception as e:
@@ -460,58 +561,50 @@ async def send_startup_message():
 #  🔄  BOUCLE PRINCIPALE
 # ═══════════════════════════════════════════════════════════════
 
-def check_vinted():
-    """Vérifie toutes les recherches Vinted"""
+def check_leboncoin():
     global seen_ids
     now = datetime.now().strftime("%H:%M:%S")
-    total_new = 0
     total_deals = 0
-    
+    total_new = 0
+
     print(f"\n{Fore.CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-    print(f"{Fore.CYAN}🔍 [{now}] Vérification en cours...")
-    
+    print(f"{Fore.CYAN}🔍 [{now}] Vérification Leboncoin...")
+
     for recherche in RECHERCHES:
         print(f"{Fore.WHITE}  → {recherche['nom']}...")
-        items = search_vinted(recherche["params"])
-        
+        ads = search_leboncoin(recherche)
+
         nouveaux = 0
         deals = 0
-        
-        for item in items:
-            item_id = str(item.get("id", ""))
-            
-            if item_id in seen_ids:
+
+        for ad in ads:
+            ad_id = str(ad.get("list_id", ""))
+            if ad_id in seen_ids:
                 continue
-            
-            seen_ids.add(item_id)
+
+            seen_ids.add(ad_id)
             nouveaux += 1
-            
-            # Analyser la plus-value
-            affaire = analyser_article(item)
-            
+
+            affaire = analyser_article(ad)
             if affaire:
                 deals += 1
                 total_deals += 1
-                
-                # Log console
                 print(f"\n{Fore.GREEN}  🔥 DEAL TROUVÉ !")
                 print(f"  {affaire['emoji_marque']} {affaire['marque'].upper()} — {affaire['titre'][:50]}")
                 print(f"  💰 {affaire['prix']}€ | Marché: {affaire['prix_marche']}€ | +{affaire['marge']}%")
-                print(f"  🔗 {affaire['url']}")
-                
-                # Alerte Telegram
+                print(f"  📍 {affaire['ville']} | 🔗 {affaire['url']}")
                 send_alert(affaire)
-        
+
         total_new += nouveaux
         if nouveaux > 0:
             print(f"{Fore.WHITE}    ✓ {nouveaux} nouvelles annonces, {deals} deals")
-        
-        time.sleep(2)  # Pause entre les requêtes
-    
+
+        time.sleep(3)  # Pause entre requêtes
+
     save_seen(seen_ids)
-    
+
     if total_deals == 0:
-        print(f"{Fore.YELLOW}  Aucun deal cette fois. {total_new} nouvelles annonces analysées.")
+        print(f"{Fore.YELLOW}  Aucun deal. {total_new} nouvelles annonces analysées.")
     else:
         print(f"\n{Fore.GREEN}✅ {total_deals} deal(s) envoyé(s) sur Telegram !")
 
@@ -521,44 +614,30 @@ def check_vinted():
 
 def main():
     print(f"""
-{Fore.CYAN}╔══════════════════════════════════════════════════╗
-║       🤖  VINTED ARBITRAGE BOT  🤖               ║
-║   Détecte les bonnes affaires automatiquement    ║
+{Fore.YELLOW}╔══════════════════════════════════════════════════╗
+║     🏷️  LEBONCOIN ARBITRAGE BOT  🏷️              ║
+║   Mode · Vélos · Électronique · Montres          ║
 ╚══════════════════════════════════════════════════╝{Style.RESET_ALL}
 
 {Fore.WHITE}Config:
   • Marges ciblées    : +{MIN_MARGE}% minimum
-  • Marques suivies   : {len(MARQUES)}
-  • Recherches actives: {len(RECHERCHES)}
-  • Intervalle        : {CHECK_INTERVAL}s
-  • Alertes           : Telegram
+  • Marques surveillées: {len(MARQUES)}
+  • Recherches actives : {len(RECHERCHES)}
+  • Intervalle         : {CHECK_INTERVAL}s
 """)
-    
-    # Vérifier config Telegram
+
     if "TON_TOKEN" in TELEGRAM_TOKEN or "TON_CHAT" in TELEGRAM_CHAT_ID:
-        print(f"{Fore.RED}⚠️  Configure TELEGRAM_TOKEN et TELEGRAM_CHAT_ID en haut du fichier !")
-        print(f"{Fore.YELLOW}   1. Crée un bot via @BotFather sur Telegram")
-        print(f"{Fore.YELLOW}   2. Récupère ton Chat ID via @userinfobot")
-        print(f"{Fore.YELLOW}   3. Remplis les variables en haut du script\n")
-        input("Appuie sur Entrée pour continuer quand même (sans Telegram)...")
-    
-    # Connexion Vinted
-    print(f"{Fore.WHITE}🌐 Connexion à Vinted...")
-    get_vinted_token()
-    
-    # Message de démarrage Telegram
-    if "TON_TOKEN" not in TELEGRAM_TOKEN:
+        print(f"{Fore.RED}⚠️  Configure TELEGRAM_TOKEN et TELEGRAM_CHAT_ID !")
+        input("Appuie sur Entrée pour continuer sans Telegram...")
+    else:
         asyncio.run(send_startup_message())
-    
-    # Première vérification immédiate
-    check_vinted()
-    
-    # Planifier les vérifications suivantes
-    schedule.every(CHECK_INTERVAL).seconds.do(check_vinted)
-    
-    print(f"\n{Fore.GREEN}✅ Bot lancé ! Vérification toutes les {CHECK_INTERVAL} secondes.")
-    print(f"{Fore.WHITE}   Appuie sur Ctrl+C pour arrêter.\n")
-    
+
+    check_leboncoin()
+    schedule.every(CHECK_INTERVAL).seconds.do(check_leboncoin)
+
+    print(f"\n{Fore.GREEN}✅ Bot lancé ! Vérification toutes les {CHECK_INTERVAL}s.")
+    print(f"{Fore.WHITE}   Ctrl+C pour arrêter.\n")
+
     while True:
         schedule.run_pending()
         time.sleep(1)
