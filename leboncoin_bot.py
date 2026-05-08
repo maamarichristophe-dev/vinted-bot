@@ -30,7 +30,7 @@ init(autoreset=True)
 #  ⚙️  CONFIG — REMPLIS CES VALEURS
 # ═══════════════════════════════════════════════════════════════
 
-TELEGRAM_TOKEN = "8652833626:AAEjoHOuNQfwkXmaT2ePuN77KCwnVM94rfc"       # Ex: 7812345678:AAF...
+TELEGRAM_TOKEN = "8237320867:AAEdwPBUbTOUDnaUvyIL-rxbkKantEPs1Q4"       # Ex: 7812345678:AAF...
 TELEGRAM_CHAT_ID = "7078032725"  # Ex: 123456789
 
 # Intervalle de vérification (en secondes)
