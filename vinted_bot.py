@@ -30,8 +30,8 @@ init(autoreset=True)
 #  ⚙️  CONFIG — REMPLIS CES VALEURS
 # ═══════════════════════════════════════════════════════════════
 
-TELEGRAM_TOKEN = "8652833626:AAEjoHOuNQfwkXmaT2ePuN77KCwnVM94rfc"       # Ex: 7812345678:AAF...
-TELEGRAM_CHAT_ID = "7078032725"  # Ex: 123456789
+TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN", "TON_TOKEN_ICI")
+TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "TON_CHAT_ID_ICI")
 
 # Intervalle de vérification (en secondes)
 CHECK_INTERVAL = 60  # Vérifie toutes les 60 secondes
