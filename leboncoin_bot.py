@@ -31,8 +31,8 @@ init(autoreset=True)
 #  ⚙️  CONFIG — REMPLIS CES VALEURS
 # ═══════════════════════════════════════════════════════════════
 
-TELEGRAM_TOKEN  = "TON_TOKEN_ICI"      # Token du 2ème bot Telegram
-TELEGRAM_CHAT_ID = "TON_CHAT_ID_ICI"   # Ton Chat ID
+TELEGRAM_TOKEN  = os.environ.get("TELEGRAM_TOKEN", "TON_TOKEN_ICI")
+TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "TON_CHAT_ID_ICI")
 
 CHECK_INTERVAL = 90   # secondes entre chaque vérification
 MIN_MARGE      = 60   # % de plus-value minimum pour alerter
