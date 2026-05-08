@@ -1,0 +1,80 @@
+# 🤖 Vinted Arbitrage Bot
+
+Détecte automatiquement les vêtements sous-cotés sur Vinted et t'alerte sur Telegram.
+
+---
+
+## ⚙️ Installation (5 minutes)
+
+### Étape 1 — Python
+Vérifie que Python est installé :
+```
+python --version
+```
+Sinon télécharge-le sur python.org
+
+### Étape 2 — Installer les dépendances
+Ouvre un terminal dans ce dossier et lance :
+```
+pip install -r requirements.txt
+```
+
+### Étape 3 — Créer ton bot Telegram
+
+1. Ouvre Telegram, cherche **@BotFather**
+2. Envoie `/newbot`
+3. Donne un nom → il te donne un **TOKEN** (ex: `7812345678:AAF...`)
+4. Cherche **@userinfobot** → envoie n'importe quoi → il te donne ton **Chat ID**
+
+### Étape 4 — Configurer le script
+
+Ouvre `vinted_bot.py` et remplis lignes 30-31 :
+```python
+TELEGRAM_TOKEN = "7812345678:AAFton_vrai_token"
+TELEGRAM_CHAT_ID = "123456789"
+```
+
+### Étape 5 — Lancer le bot
+```
+python vinted_bot.py
+```
+
+---
+
+## 📱 Ce que tu reçois sur Telegram
+
+Quand le bot trouve une bonne affaire :
+
+```
+⚡⚡ 🔥 TRÈS BONNE AFFAIRE ⚡⚡
+
+🪨 STONE ISLAND
+📦 Veste Stone Island automne hiver
+
+💰 Prix Vinted : 45€
+🏷️ Prix marché : ~180€
+📈 Plus-value potentielle : +300%
+💵 Revendre à ~135€ → profit ~87€
+
+📏 Taille : L
+🔗 VOIR L'ANNONCE
+```
+
+---
+
+## 🎛️ Personnaliser
+
+Dans `vinted_bot.py` tu peux modifier :
+
+- `MIN_MARGE = 60` → Changer le seuil de plus-value minimum
+- `CHECK_INTERVAL = 60` → Changer la fréquence de vérification
+- `MARQUES` → Ajouter/modifier les marques et leurs prix marché
+- `RECHERCHES` → Ajouter des nouvelles recherches Vinted
+
+---
+
+## ⚠️ Notes importantes
+
+- Le bot tourne en local sur ton PC (doit rester allumé)
+- Vinted peut bloquer temporairement si trop de requêtes → le bot gère ça automatiquement
+- Les prix marché sont des estimations moyennes, ajuste-les selon ton expérience
